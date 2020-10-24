@@ -2,11 +2,7 @@
 
 int main()
 {
-    printf("hello Ubuntu vscode world\n");
-
-    printf("hello !!");
-
-    printf("2");
-
+  printf("hi my name is YoungBeom Kim\n ");
+  
     return 0;
 }

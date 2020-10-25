@@ -18,6 +18,7 @@ void error_handling(char *message)
 
 int main(int argc, char *argv[])
 {
+    printf("start\n");
     int sock;
     struct sockaddr_in serv_addr;
     char message[64];

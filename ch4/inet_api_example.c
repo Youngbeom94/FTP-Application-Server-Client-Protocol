@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include <openssl/aes.h>
 
 void error_handling(char* message)
 {

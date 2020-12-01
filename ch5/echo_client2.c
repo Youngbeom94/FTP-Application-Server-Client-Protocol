@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     else
     {
         puts("Connected.............");
-    }
+    }//
 
     while(1)
     {

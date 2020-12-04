@@ -12,6 +12,7 @@
 #define BUF_SIZE 1024
 #define OPSZ     4
 
+
 int calculate(int opnum, int opnds[], char op)
 {
     int result = ntohl(opnds[0]);

@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     int ciphertext_len;
     int current_command = CLIENT_ID_PW;
     
-    unsigned char key[AES_KEY_128] = {0x000, };
+    unsigned char session_key[AES_KEY_128] = {0x000, };
     unsigned char iv[AES_KEY_128] = {0x00, };
     unsigned char id_mac[MAC_SIZE] = {0x00,};
     unsigned char pw_mac[MAC_SIZE] = {0x00,};
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     }
 
     RAND_poll();
-    RAND_bytes(key, sizeof(key)); 
+    RAND_bytes(session_key, sizeof(session_key)); 
 
     for (int cnt_i = 0; cnt_i < AES_KEY_128; cnt_i++)
     {
@@ -117,15 +117,8 @@ int main(int argc, char* argv[])
     memset(&MSG_OUT, 0, sizeof(APP_MSG));
     MSG_OUT.type = ENCRYPTED_KEY;
     MSG_OUT.type = htonl(MSG_OUT.type);
-    MSG_OUT.msg_len = RSA_public_encrypt(sizeof(key), key, MSG_OUT.payload, rsa_pubkey, RSA_PKCS1_OAEP_PADDING);
+    MSG_OUT.msg_len = RSA_public_encrypt(sizeof(session_key), session_key, MSG_OUT.payload, rsa_pubkey, RSA_PKCS1_OAEP_PADDING);
     MSG_OUT.msg_len = htonl(MSG_OUT.msg_len);
-
-    // for(cnt_i = 0 ; cnt_i<16 ; cnt_i ++)
-    // {
-    //     printf("%02x ", key[cnt_i]);
-    // }
-    // printf("\n");
-
 
     type = writen(sock, &MSG_OUT, sizeof(APP_MSG));
 
@@ -168,14 +161,14 @@ int main(int argc, char* argv[])
                     break;
 
 
-                HMAC_SHA256_Encrpyt(client_id,strlen(client_id), key, strlen(key), id_mac);
-                id_len = encrypt((unsigned char *)client_id, id_len, key, iv, ID.payload);
+                HMAC_SHA256_Encrpyt(client_id,strlen(client_id), session_key, strlen(session_key), id_mac);
+                id_len = encrypt((unsigned char *)client_id, id_len, session_key, iv, ID.payload);
                 ID.type = current_command;
                 ID.type = htonl(ID.type);
                 ID.msg_len = htonl(id_len);
             
-                HMAC_SHA256_Encrpyt(client_pw,strlen(client_pw), key, strlen(key), pw_mac);
-                pw_len = encrypt((unsigned char *)client_pw, pw_len, key, iv, PW.payload);
+                HMAC_SHA256_Encrpyt(client_pw,strlen(client_pw), session_key, strlen(session_key), pw_mac);
+                pw_len = encrypt((unsigned char *)client_pw, pw_len, session_key, iv, PW.payload);
                 PW.type = current_command;
                 PW.type = htonl(PW.type);
                 PW.msg_len = htonl(pw_len);
@@ -218,14 +211,14 @@ int main(int argc, char* argv[])
                     if (strlen(client_pw) == 0)
                         break;
 
-                    HMAC_SHA256_Encrpyt(client_id,strlen(client_id), key, strlen(key), id_mac);
-                    id_len = encrypt((unsigned char *)client_id, id_len, key, iv, ID.payload);
+                    HMAC_SHA256_Encrpyt(client_id,strlen(client_id), session_key, strlen(session_key), id_mac);
+                    id_len = encrypt((unsigned char *)client_id, id_len, session_key, iv, ID.payload);
                     ID.type = current_command;
                     ID.type = htonl(ID.type);
                     ID.msg_len = htonl(id_len);
             
-                    HMAC_SHA256_Encrpyt(client_pw,strlen(client_pw), key, strlen(key), pw_mac);
-                    pw_len = encrypt((unsigned char *)client_pw, pw_len, key, iv, PW.payload);
+                    HMAC_SHA256_Encrpyt(client_pw,strlen(client_pw), session_key, strlen(session_key), pw_mac);
+                    pw_len = encrypt((unsigned char *)client_pw, pw_len, session_key, iv, PW.payload);
                     PW.type = current_command;
                     PW.type = htonl(PW.type);
                     PW.msg_len = htonl(pw_len);
@@ -312,8 +305,8 @@ int main(int argc, char* argv[])
                 memset(&MSG_OUT, 0, sizeof(APP_MSG));
                 memcpy(enc_file_name2, save_file_name, strlen(save_file_name));
 
-                HMAC_SHA256_Encrpyt(enc_file_name2, strlen(enc_file_name2), key, strlen(key), net_work_mac);
-                plaintext_len = encrypt((unsigned char*)enc_file_name2, strlen(enc_file_name2), key, iv, MSG_OUT.payload);
+                HMAC_SHA256_Encrpyt(enc_file_name2, strlen(enc_file_name2), session_key, strlen(session_key), net_work_mac);
+                plaintext_len = encrypt((unsigned char*)enc_file_name2, strlen(enc_file_name2), session_key, iv, MSG_OUT.payload);
                 MSG_OUT.type = htonl(UP);
                 MSG_OUT.msg_len = htonl(plaintext_len);
                 writen(sock, &MSG_OUT, sizeof(APP_MSG));
@@ -330,8 +323,8 @@ int main(int argc, char* argv[])
                         printf("[***FINISH FILE***]\n");
                         break;
                     }
-                    HMAC_SHA256_Encrpyt(buff, file_len, key, strlen(key), net_work_mac);
-                    file_len = encrypt((unsigned char*)buff, file_len, key, iv, MSG_OUT.payload);
+                    HMAC_SHA256_Encrpyt(buff, file_len, session_key, strlen(session_key), net_work_mac);
+                    file_len = encrypt((unsigned char*)buff, file_len, session_key, iv, MSG_OUT.payload);
                     MSG_OUT.msg_len = htonl(file_len);
                     MSG_OUT.type = htonl(FILE_DATA);
                     writen(sock, &MSG_OUT, sizeof(APP_MSG));
@@ -361,8 +354,8 @@ int main(int argc, char* argv[])
                 memset(net_work_mac, 0, sizeof(net_work_mac));
                 memcpy(enc_file_name1, upload_file_name, strlen(upload_file_name));
 
-                HMAC_SHA256_Encrpyt(enc_file_name1,strlen(enc_file_name1), key, strlen(key), net_work_mac);
-                plaintext_len = encrypt((unsigned char*)enc_file_name1, strlen(enc_file_name1), key, iv, MSG_OUT.payload);
+                HMAC_SHA256_Encrpyt(enc_file_name1,strlen(enc_file_name1), session_key, strlen(session_key), net_work_mac);
+                plaintext_len = encrypt((unsigned char*)enc_file_name1, strlen(enc_file_name1), session_key, iv, MSG_OUT.payload);
                 MSG_OUT.type = htonl(DOWN);
                 MSG_OUT.msg_len = htonl(plaintext_len);
                 writen(sock, &MSG_OUT, sizeof(APP_MSG));
@@ -400,8 +393,8 @@ int main(int argc, char* argv[])
                     if (MSG_IN.type == FILE_DATA)
                     {
                         readn(sock, net_work_mac, sizeof(net_work_mac));
-                        file_len = decrypt(MSG_IN.payload, MSG_IN.msg_len, key, iv, (unsigned char *)buff);
-                        HMAC_SHA256_Encrpyt(buff,strlen(buff), key, strlen(key), testing_mac);
+                        file_len = decrypt(MSG_IN.payload, MSG_IN.msg_len, session_key, iv, (unsigned char *)buff);
+                        HMAC_SHA256_Encrpyt(buff,strlen(buff), session_key, strlen(session_key), testing_mac);
                         if (!strcmp(net_work_mac, testing_mac))
                         {
                             printf("[XXX HASH ERROR XXX]\n");
@@ -441,8 +434,8 @@ int main(int argc, char* argv[])
                     {
                         readn(sock, net_work_mac, sizeof(net_work_mac));
 
-                        ciphertext_len = decrypt(MSG_IN.payload, MSG_IN.msg_len, key, iv, (unsigned char*)file_name);
-                        HMAC_SHA256_Encrpyt(file_name, ciphertext_len, key, strlen(key), testing_mac);
+                        ciphertext_len = decrypt(MSG_IN.payload, MSG_IN.msg_len, session_key, iv, (unsigned char*)file_name);
+                        HMAC_SHA256_Encrpyt(file_name, ciphertext_len, session_key, strlen(session_key), testing_mac);
                         int hash_flag = TRUE;
                         for(int cnt_i = 0  ; cnt_i < MAC_SIZE  ; cnt_i ++)
                         {
